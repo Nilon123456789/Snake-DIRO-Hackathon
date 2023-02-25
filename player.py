@@ -10,6 +10,7 @@ class Player(Component):
         self.__body = []
         self.__direction = Direction["UP"]
         self.__pointage = 0
+        self.__username = ""
     
     @property
     def body(self):

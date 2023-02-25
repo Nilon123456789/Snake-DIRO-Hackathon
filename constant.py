@@ -16,8 +16,7 @@ Foods = {
     "POISON": 3,
     "CHRONO_POMME": 4,
     "RETRECIR": 5,
-    "FORCE": 6,
-    "VITESSE": 7
+    "VITESSE": 6
 }
 
 Direction = {

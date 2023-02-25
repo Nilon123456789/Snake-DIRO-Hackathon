@@ -14,13 +14,16 @@ class SnakeGame:
         self.bg = '#000'  # general background color
 
         # game Mode
-        self.game_mode = {}  # game state
-        self.game_mode['ai_3'] = [self.load_ai_3, 0]
-        self.game_mode['ai_2'] = [self.load_ai_2, 0]
-        self.game_mode['ai_1'] = [self.load_ai_1, 0]
-        self.game_mode['normal'] = [self.load_normal, 0]
-        self.game_mode['online_ffa'] = [self.load_online_ffa, 1]
-        self.game_mode['online_normal'] = [self.load_online_normal, 1]
+
+        self.game_mode = None
+
+        self.game_modes = {}  # game state
+        self.game_modes['ai_hard'] = [self.load_ai_3, 0]
+        self.game_modes['ai_normal'] = [self.load_ai_2, 0]
+        self.game_modes['ai_easy'] = [self.load_ai_1, 0]
+        self.game_modes['normal'] = [self.load_normal, 0]
+        self.game_modes['online_ffa'] = [self.load_online_ffa, 1]
+        self.game_modes['online_normal'] = [self.load_online_normal, 1]
 
         # Gride
         self.game_matrix = None
@@ -147,12 +150,12 @@ class SnakeGame:
 
         def items():
             result = []
-            for gamemode in self.game_mode:
+            for gamemode in self.game_modes:
                 if self.networked:
-                    if self.game_mode[gamemode][1] == 1:
+                    if self.e[gamemode][1] == 1:
                         result.append(gamemode) # add only online game modes
                 else:
-                    if self.game_mode[gamemode][1] == 0:
+                    if self.game_modes[gamemode][1] == 0:
                         result.append(gamemode) # add only offline game modes
             return result
 
@@ -166,10 +169,23 @@ class SnakeGame:
                     self.menuImageCnt = 1
                     # dev.draw_image(10, 10, readFile("snake-title.png"))
                     dev.draw_image(10, 10, snakeImgs.title1())
+                    dev.draw_image(20, 60, snakeImgs.spritemenu2())
 
                 elif self.menuImageCnt == 1:
+                    self.menuImageCnt = 2
+                    dev.draw_image(10, 10, snakeImgs.title2())
+                    dev.draw_image(20, 60, snakeImgs.spritemenu3())
+
+                elif self.menuImageCnt == 2:
+                    self.menuImageCnt = 3
+                    dev.draw_image(10, 10, snakeImgs.title1())
+                    dev.draw_image(20, 60, snakeImgs.spritemenu2())
+
+                elif self.menuImageCnt == 3:
                     self.menuImageCnt = 0
                     dev.draw_image(10, 10, snakeImgs.title2())
+                    dev.draw_image(20, 60, snakeImgs.spritemenu3())
+
                 
             else:  # an item was selected by the menu
                 self.game_mode = item
@@ -180,7 +196,7 @@ class SnakeGame:
         # self.menu(
         # ui.center(dev.screen_width//2, 40, '\x1F\x1FGame\x1F\x1F', fg, self.bg)
 
-        dev.draw_image(20, 60, readFile("snake1.png"))        
+        # dev.draw_image(20, 60, readFile("snake1.png"))        
         ui.menu(4, 150, 8, 8, 2, [fg, "#632"], items, "normal", menu_handler)
 
 
