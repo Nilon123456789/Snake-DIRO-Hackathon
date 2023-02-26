@@ -13,10 +13,11 @@ Foods = {
     "POMME": 0,
     "POMME_10": 1,
     "POMME_BLOC": 2,
-    "POISON": 3,
+    "VITESSE": 3,
     "CHRONO_POMME": 4,
     "RETRECIR": 5,
-    "VITESSE": 6
+    "VELOCE": 6,
+    "POISON": 7
 }
 
 Direction = {

@@ -32,6 +32,10 @@ class Component:
     def img(self):
         return self.__img
     
+    @img.setter
+    def img(self, img):
+        self.__img = img
+    
     def newPos(self, x, y):
         self.__x = x
         self.__y = y

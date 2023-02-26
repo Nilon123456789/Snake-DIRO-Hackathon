@@ -25,17 +25,10 @@ class Map():
 
 
     # Carte 
-    def island_map(self):
-        time_delay = 5
-
-
-
-        
-
-    def ice_map(self):
+    def labyrinth_map(self):
         pass
 
-    def forest_map(self):
-        pass
+
+
 
 

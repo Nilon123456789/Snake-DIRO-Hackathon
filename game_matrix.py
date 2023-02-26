@@ -1,22 +1,35 @@
 import ttgo as dev
 import ui
+import net
 from component import Component
 from player import Player
 from food import Food
+from chrono_pomme import Chrono_pomme
+from veloce_pomme import Veloce_Pomme
 from constant import Direction, IDs, Foods
+from sprites import Tail as tailSprite
+from sprites import Body as bodySprite
 import bg
 from tail import Tail
 from wall import Wall
+import snakeImgs
 import random
 
 class GameMatrix:
 
 
 
-    def __init__(self):
+    def __init__(self, get_tick, set_update_interval):
+        pass
+
+    def reset_game(self, get_tick, set_update_interval):
+        self.isDead = False
         self.block = 10
         self.width = dev.screen_width // self.block # 135 pixels
         self.height = (dev.screen_height - 20) // self.block # 230 pixels
+        self.get_tick = get_tick
+        self.set_update_interval = set_update_interval
+        self.restart_game = False
 
         self.game_matrix = []
         for i in range(self.height):
@@ -24,39 +37,68 @@ class GameMatrix:
             for j in range(self.width):
                 self.game_matrix[i].append(Component(0, 0, 0, 0))
 
+        self.chrono_apples = []
+        self.veloce_apples = []
+        self.poison_apples = 0
+        self.next_apple_spawn = self.get_tick() + random.randint(60, 350)
 
-        self.players = []
+        self.players = {}
         self.x_offset = (dev.screen_width-self.width*self.block)//2
         
 
-        self.players.append(Player(self.width//2, self.height//2))
-        self.game_matrix[self.height//2][self.width//2] = self.players[0]
+        self.players[net.id] = Player(self.width//2, self.height//2)
+        self.game_matrix[self.height//2][self.width//2] = self.players[net.id]
 
         # Create a random apple
         self.create_apple(Foods["POMME"])
-        self.create_apple(Foods["POMME"])
 
         self.draw_matrix()
+
+        dev.draw_text(0, dev.screen_height - dev.font_height, "Score", "#fff", "#000")
+        self.draw_pointage()
                 
+        
+
     def draw_pointage(self):
-        dev.draw_text(0, 0, "Player 1: " + str(self.players[0].pointage), "#fff", "#000")
-        dev.draw_text(0, dev.screen_width//2, "Player 2: " + str(self.players[1].pointage), "#fff", "#000")
-        pass
+        text_offset = 7 - (self.players[net.id].pointage >= 10) - (self.players[net.id].pointage >= 100)
+        dev.draw_text(dev.font_width*(text_offset), dev.screen_height - dev.font_height, self.players[net.id].pointage, "#fff", "#000")
+        
     
     def draw_matrix(self):
 
         for i in range(self.height):
             for j in range(self.width):
-                self.draw(j, i)
+                self.draw(j, i, True)
                 
-    def draw(self, x, y):
-        if (self.game_matrix[y][x].id == IDs["AIR"]):
+    def draw(self, x, y, force=False):
+        if (self.game_matrix[y][x].id == IDs["AIR"] or force):
             dev.draw_image(self.x_offset+x*self.block, y*self.block, bg.bg())
+            if (not force):
+                return
+            
+        if (self.game_matrix[y][x].img == 0):
             return
-        dev.fill_rect(self.x_offset+x*self.block+1, y*self.block+1, self.block-2, self.block-2, self.game_matrix[y][x].img)
+
+        elif (len(self.game_matrix[y][x].img) <= 5):
+            dev.fill_rect(self.x_offset+x*self.block+1, y*self.block+1, self.block-2, self.block-2, self.game_matrix[y][x].img)
+        else:
+            dev.draw_image(self.x_offset+x*self.block, y*self.block, self.game_matrix[y][x].img)
+    
+    ''' Move and draw the component at the new position '''
+    def move_draw(self, component, x, y, draw=True):
+        component.newPos(x, y)
+        self.game_matrix[y][x] = component
+        if (draw):
+            self.draw(x, y)
+    
+    ''' Only set the grid position of the component and draw it '''
+    def new_draw(self, component, x, y, draw=True):
+        self.game_matrix[y][x] = component
+        if (draw):
+            self.draw(x, y)
 
     def update_direction(self, event):
-        current_direction = self.players[0].direction
+        current_direction = self.players[net.id].direction
 
         if event == 'left_down':
             current_direction -= 1
@@ -70,7 +112,7 @@ class GameMatrix:
         elif current_direction < 0:
             current_direction = 3
 
-        self.players[0].direction = current_direction
+        self.players[net.id].direction = current_direction
 
     def update_player_head(self, player):
         posX = player.x
@@ -87,11 +129,9 @@ class GameMatrix:
             posX -= 1
         elif (player.direction == Direction["RIGHT"]):
             posX += 1
-
-        print("Player pos: ", posX, posY, "Direction: ", player.direction, "Last pos: ", lastX, lastY)
         
         if (posX < 0 or posX >= self.width or posY < 0 or posY >= self.height):
-            # TODO implement game over
+            self.game_over(player)
             print("Game Over")
             return
         
@@ -99,68 +139,111 @@ class GameMatrix:
 
         if (obj.id != IDs["AIR"]):
             if(obj.id == IDs["FOOD"]):
-
+                # Update the pointage of the player
                 player.add_pointage(obj.points)
+                self.draw_pointage()
                 
-                player.newPos(posX, posY)
-                self.game_matrix[posY][posX] = player
-                self.draw(posX, posY)
+                # Set the new head positon of the player
+                self.move_draw(player, posX, posY)
                 
+                # Action depending on the food
                 if (obj.food_id == Foods["POMME_BLOC"]):
+                    # Move forward the tail and add a new block at the end of the tail
                     self.update_player_tail(player, lastX, lastY, add_block=True)
                 elif (obj.food_id == Foods["POISON"]):
-                    # TODO implement poison
-                    pass
-                elif (obj.food_id == Foods["CHRONO_POMME"]):
-                    # TODO implement chrono pomme
-                    pass
+                    self.game_over(player)
                 elif (obj.food_id == Foods["RETRECIR"]):
+
                     bodys = player.body
+
+                    # If the player has no tail, the game is over since he can't shrink
                     if (len(bodys) == 0):
-                        # TODO implement game over
+                        self.game_over(player)
                         return
                     
+                    # Remove the last block of the tail
                     last = bodys.pop()
-                    self.game_matrix[last.y][last.x] = Component(id=IDs["AIR"], x=last.x, y=last.y, img=0)
-                    self.draw(last.x, last.y)
+                    self.new_draw(Component(IDs["AIR"], last.x, last.y, 0), last.x, last.y)
 
+                    # Set the new tail
                     if (len(bodys) > 0):
-                        bodys[len(bodys)].set_as_end()
-                        self.draw(bodys[len(bodys)].x, bodys[len(bodys)].y)
-                        self.draw(last.x, last.y)
-                        self.update_player_tail(player, lastX, lastY)
-                    pass
-                elif (obj.food_id == Foods["VITESSE"]):
-                    # TODO implement vitesse
-                    pass    
-                else:
-                    body = Tail(player, lastX, lastY)
-                    self.game_matrix[lastY][lastX] = body
+                        last_body = bodys[len(bodys)-1]
+                        last_body.set_as_end(bodys[len(bodys)-2].x, bodys[len(bodys)-2].y)
+                        self.draw(last_body.x, last_body.y)
 
-                self.create_apple(apple_id=Foods["RETRECIR"])
-            
+                    # Move forward the tail
+                    self.update_player_tail(player, lastX, lastY)
+
+
+                else:
+                    if (obj.food_id == Foods["CHRONO_POMME"]):
+                        self.chrono_apples.remove(obj)
+                    elif (obj.food_id == Foods["VITESSE"]):
+                        self.set_update_interval(0.5)
+                    elif (obj.food_id == Foods["VELOCE"]):
+                        self.veloce_apples.remove(obj)
+                    # There is no special action for this food so we just add a new block at the old head position
+                    self.new_draw(Tail(player, lastX, lastY, tailSprite.bottom_tail()), lastX, lastY, draw=False)
+
+                self.create_apple()
+
+            elif(obj.id == IDs["PLAYER_BODY"] or obj.id == IDs["WALL"]):
+                self.game_over(player)
+                # print("Game Over")
+                return
             bodys = player.body
             if (len(bodys) == 1):
-                bodys[0].set_as_end()
+                bodys[0].set_as_end(player.x, player.y)
             self.draw(lastX, lastY)
             return
         else :
-            player.newPos(posX, posY)
-            self.game_matrix[posY][posX] = player
-            self.draw(posX, posY)
+            self.move_draw(player, posX, posY)
             self.update_player_tail(player, lastX, lastY)
+    
+    def body_img(self, posAfter, pos, posBefore):
 
 
+        dir = self.get_dir(posBefore, pos)
+
+        if (posAfter[1] < pos[1] and dir == Direction["RIGHT"]):
+            return bodySprite.top_right_corner()
+        elif (posAfter[1] < pos[1] and dir == Direction["LEFT"]):
+            return bodySprite.top_left_corner()
+        elif (posAfter[1] > pos[1] and dir == Direction["RIGHT"]):
+            return bodySprite.bottom_right_corner()
+        elif (posAfter[1] > pos[1] and dir == Direction["LEFT"]):
+            return bodySprite.bottom_left_corner()
+        elif (posAfter[0] < pos[0] and dir == Direction["UP"]):
+            return bodySprite.bottom_left_corner()
+        elif (posAfter[0] < pos[0] and dir == Direction["DOWN"]):
+            return bodySprite.top_left_corner()
+        elif (posAfter[0] > pos[0] and dir == Direction["UP"]):
+            return bodySprite.bottom_right_corner()
+        elif (posAfter[0] > pos[0] and dir == Direction["DOWN"]):
+            return bodySprite.top_right_corner()
+        elif (dir == Direction["UP"] or dir == Direction["DOWN"]):
+            return bodySprite.vertical()
+        elif (dir == Direction["LEFT"] or dir == Direction["RIGHT"]):
+            return bodySprite.horizontal()
+    
+    def get_dir(self, posBefore, pos):
+        if (posBefore[0] < pos[0]):
+            return Direction["RIGHT"]
+        elif (posBefore[0] > pos[0]):
+            return Direction["LEFT"]
+        elif (posBefore[1] > pos[1]):
+            return Direction["DOWN"]
+        elif (posBefore[1] < pos[1]):
+            return Direction["UP"]
     
     def update_player_tail(self, player, lastX, lastY, add_block=False):
         bodys = player.body
         
         if (len(bodys) == 0):
             if (not add_block):
-                self.game_matrix[lastY][lastX] = Component(id=IDs["AIR"], x=lastX, y=lastY, img=0)
+                self.new_draw(Component(id=IDs["AIR"], x=lastX, y=lastY, img=0), lastX, lastY)
             else:
-                self.game_matrix[lastY][lastX] = Wall(lastX, lastY)
-            self.draw(lastX, lastY)
+                self.new_draw(Wall(lastX, lastY), lastX, lastY)
             return
 
         for i in range(len(bodys)):
@@ -170,39 +253,114 @@ class GameMatrix:
             lastX = bodys[i].x
             lastY = bodys[i].y
 
-            bodys[i].newPos(newPosX, newPosY)
-            self.game_matrix[newPosY][newPosX] = bodys[i]
-            self.draw(bodys[i].x, bodys[i].y)
+            
+            if (not bodys[i].end):
+                bodys[i].img = self.body_img((lastX, lastY), (newPosX, newPosY), (bodys[i-1].x, bodys[i-1].y))
+            else:
+                print("beforePos" + str((bodys[i-1].x, bodys[i-1].y)) + " pos " + str((newPosX, newPosY)))
+                bodys[i].img = tailSprite.get_tail(self.get_dir((bodys[i-1].x, bodys[i-1].y), (newPosX, newPosY)))
+            
+            self.move_draw(bodys[i], newPosX, newPosY)
 
             if (not add_block):
-                self.game_matrix[lastY][lastX] = Component(id=IDs["AIR"], x=lastX, y=lastY, img=0)
+                self.new_draw(Component(id=IDs["AIR"], x=lastX, y=lastY, img=0), lastX, lastY)
             else:
-                self.game_matrix[lastY][lastX] = Wall(lastX, lastY)
-            self.draw(lastX, lastY)
+                self.new_draw(Wall(lastX, lastY), lastX, lastY)
 
 
     def create_apple(self, apple_id=None):
 
         if (apple_id == None):
-            apple_id = random.randint(0, len(Foods)-1)
-        
-        x = random.randint(0, self.width-1)
-        y = random.randint(0, self.height-1)
 
-        while (self.game_matrix[y][x].id != IDs["AIR"]):
-            x = random.randint(0, self.width-1)
-            y = random.randint(0, self.height-1)
+            # All the foods are available
+            if (len(self.players[net.id].body) > 1):
+                apple_id = random.randint(0, len(Foods)-1)
+                
+                # Stop the poison apples from spawning too much
+                if (apple_id == Foods["POISON"] and self.poison_apples > 2):
+                    while (apple_id == Foods["POISON"]):
+                        apple_id = random.randint(0, len(Foods)-5)
         
-        self.game_matrix[y][x] = Food(food_id=apple_id, x=x, y=y)
-        self.draw(x, y)
+            # Only the basic foods are available
+            else:
+                apple_id = random.randint(0, len(Foods)-5)
+
+
+        
+        pos = self.random_pos()
+
+        while (self.game_matrix[pos[1]][pos[0]].id != IDs["AIR"]):
+            pos = self.random_pos()
+        if (apple_id == Foods["CHRONO_POMME"]):
+            self.new_draw(Chrono_pomme(x=pos[0], y=pos[1], chrono_apples_list=self.chrono_apples, current_time=self.get_tick()), pos[0], pos[1])
+        elif (apple_id == Foods["VELOCE"]):
+            self.new_draw(Veloce_Pomme(x=pos[0], y=pos[1], veloce_apples_list=self.veloce_apples, current_time=self.get_tick()), pos[0], pos[1])
+        else:
+            if (apple_id == Foods["POISON"]):
+                self.poison_apples += 1
+            self.new_draw(Food(food_id=apple_id, x=pos[0], y=pos[1]), pos[0], pos[1])
 
     def update(self):
-        for player in self.players:
-            self.update_player_head(player)
-    
 
+        if self.isDead: return
+        current_time = self.get_tick()
+
+        for apple in self.chrono_apples:
+            if (current_time > apple.quit_time):
+                self.new_draw(Component(IDs["AIR"], apple.x, apple.y, 0), apple.x, apple.y)
+                self.chrono_apples.remove(apple)
+        
+        for apple in self.veloce_apples:
+            if (current_time > apple.move_time):
+
+                oldX = apple.x
+                oldY = apple.y
+                
+                pos = self.random_pos()
+
+                while (self.game_matrix[pos[1]][pos[0]].id != IDs["AIR"]):
+                    pos = self.random_pos()
+                
+                self.move_draw(apple, pos[0], pos[1])
+                self.new_draw(Component(IDs["AIR"], oldX, oldY, 0), oldX, oldY)
+
+                apple.set_move_time(current_time)
+        
+        if (current_time > self.next_apple_spawn):
+            self.create_apple()
+            self.next_apple_spawn = current_time + random.randint(60, 350)
+
+        for key, player in self.players.items():
+            self.update_player_head(player)
+        
+        
     def get_matrix(self):
         return self.game_matrix
     
-    def game_over(self):
-        pass
+    def random_pos(self):
+        x = random.randint(0, self.width-1)
+        y = random.randint(0, self.height-1)
+        return (x, y)
+        
+    
+    def game_over(self, player):
+        self.isDead = True
+        dev.clear_screen("#000")
+        fg = '#000'
+
+        x = dev.screen_width//2
+        
+        #dev.after(ui.time_delta, cont)
+        ui.center(x, dev.font_height*4, 'GAME', '#FFF', "#000")
+        ui.center(x, dev.font_height*5, 'OVER', '#FFF', "#000")
+    
+        dev.draw_image(x - 40, dev.font_height*7, snakeImgs.gameover_img1())
+
+        ui.center(x, dev.font_height*11, "SCORE", '#FFF', "#000")
+        ui.center(x, dev.font_height*12, str(player.pointage), '#FFF', "#000")
+
+        
+        
+        
+
+        
