@@ -7,6 +7,7 @@ import random
 
 import snakeImgs
 from game_matrix import GameMatrix
+from player import Player
 
 class SnakeGame:
 
@@ -99,7 +100,15 @@ class SnakeGame:
             if self.tick_counter >= self.last_update + self.update_interval:
                 self.isDead = self.game_matrix.isDead
                 self.last_update = self.tick_counter
-                self.game_matrix.update()
+                # if master send update to clients
+                if self.master():
+                    self.game_matrix.update()
+                    if self.networked:
+                        for player in self.listOfPlayers:
+                            # net.send(player, ['update', self.game_matrix.get_state()])
+                            obj = ["update", self.game_matrix.players[player].direction, self.game_matrix.players[player].x, self.game_matrix.players[player].y]
+                            net.send(player, obj)
+                # self.game_matrix.update()
             if self.networked:
                 self.pong_timer -= 1
                 if self.pong_timer < 0:
@@ -116,11 +125,11 @@ class SnakeGame:
             else:
                 self.game_matrix.update_direction(event)
 
-                if self.isHosting:
-                    for player in self.listOfPlayers:
-                        net.send(player, ["direction", event])  # if hosting (ffa)
-                else:
-                    net.send(mate.id, ["direction", event]) # if connected in peer (client or 1v1)
+                # if self.isHosting:
+                #     for player in self.listOfPlayers:
+                #         net.send(player, ["direction", event])  # if hosting (ffa)
+                # else:
+                #     net.send(mate.id, ["direction", event]) # if connected in peer (client or 1v1)
             
             # self.game_over(event)
             # ui.center(dev.screen_width//2, dev.font_height*5, msg, '#FFF', self.bg)
@@ -156,6 +165,7 @@ class SnakeGame:
     def load_online_menu(self): # called by host to start the game
         for player in self.listOfPlayers:
             net.send(player, ["custom", "start"])
+            self.game_matrix.players[player] = Player(6, 7, player)
         self.load_online()
     
     def menu(self):  # pick an app with a menu and call its handler # 5
@@ -268,10 +278,16 @@ class SnakeGame:
                 print('received', peer, msg)
         elif type(msg) is list and msg[0] == 'custom':
             if msg[1] == 'ready':
-                if not self.isHosting and self.master() and not self.isSlave:
+                if not self.isHosting and self.master() and not self.isSlave: # only work in 1v1 mode
                     self.start_game_soon(peer)
             if msg[1] == 'start':
                 self.load_online()
+                self.game_matrix.players[peer] = Player(6, 7, peer)
+
+        elif type(msg) is list and msg[0] == 'update':
+            self.game_matrix.update()
+
+
         if self.isHosting and not self.isReady: # BYPASS ADD MULTIPLE PLAYERS
             if (len(self.listOfPlayers) >= 2):
                 self.found_mates()

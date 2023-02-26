@@ -20,13 +20,18 @@ class GameMatrix:
 
 
     def __init__(self, get_tick, set_update_interval):
-        pass
-
-    def reset_game(self, get_tick, set_update_interval):
-        self.isDead = False
+        self.players = {}
+        self.chrono_apples = []
+        self.veloce_apples = []
+        self.poison_apples = 0
         self.block = 10
         self.width = dev.screen_width // self.block # 135 pixels
         self.height = (dev.screen_height - 20) // self.block # 230 pixels
+
+        
+    def reset_game(self, get_tick, set_update_interval):
+        self.isDead = False
+
         self.get_tick = get_tick
         self.set_update_interval = set_update_interval
         self.restart_game = False
@@ -37,17 +42,14 @@ class GameMatrix:
             for j in range(self.width):
                 self.game_matrix[i].append(Component(0, 0, 0, 0))
 
-        self.chrono_apples = []
-        self.veloce_apples = []
-        self.poison_apples = 0
+
         self.next_apple_spawn = self.get_tick() + random.randint(60, 350)
 
-        self.players = {}
         self.x_offset = (dev.screen_width-self.width*self.block)//2
         
 
         self.players[net.id] = Player(self.width//2, self.height//2, net.id)
-        self.players["test"] = Player(self.width//2 + 5, self.height//2 + 5, "test")
+        # self.players["test"] = Player(self.width//2 + 5, self.height//2 + 5, "test")
         self.game_matrix[self.height//2][self.width//2] = self.players[net.id]
 
         # Create a random apple
