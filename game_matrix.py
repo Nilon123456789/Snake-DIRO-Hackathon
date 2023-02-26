@@ -46,7 +46,8 @@ class GameMatrix:
         self.x_offset = (dev.screen_width-self.width*self.block)//2
         
 
-        self.players[net.id] = Player(self.width//2, self.height//2)
+        self.players[net.id] = Player(self.width//2, self.height//2, net.id)
+        self.players["test"] = Player(self.width//2 + 5, self.height//2 + 5, "test")
         self.game_matrix[self.height//2][self.width//2] = self.players[net.id]
 
         # Create a random apple
@@ -113,6 +114,23 @@ class GameMatrix:
             current_direction = 3
 
         self.players[net.id].direction = current_direction
+    
+    def update_direction_other(self, id, event):
+        current_direction = self.players[id].direction
+
+        if event == 'left_down':
+            current_direction -= 1
+           
+        elif event == 'right_down':
+            current_direction += 1
+        
+        if current_direction > 3:
+            current_direction = 0
+
+        elif current_direction < 0:
+            current_direction = 3
+
+        self.players[id].direction = current_direction
 
     def update_player_head(self, player):
         posX = player.x
@@ -344,6 +362,8 @@ class GameMatrix:
         
     
     def game_over(self, player):
+        if player.userId != net.id:
+            return
         self.isDead = True
         dev.clear_screen("#000")
         fg = '#000'

@@ -40,6 +40,7 @@ class SnakeGame:
         self.isSlave = False
         self.isReady = False
         self.inMenu = False
+        self.firstTime = True
 
 
         self.networked   = False  # are we playing over the network?
@@ -114,6 +115,12 @@ class SnakeGame:
                 self.game_over(event)
             else:
                 self.game_matrix.update_direction(event)
+
+                if self.isHosting:
+                    for player in self.listOfPlayers:
+                        net.send(player, ["direction", event])  # if hosting (ffa)
+                else:
+                    net.send(mate.id, ["direction", event]) # if connected in peer (client or 1v1)
             
             # self.game_over(event)
             # ui.center(dev.screen_width//2, dev.font_height*5, msg, '#FFF', self.bg)
@@ -212,7 +219,9 @@ class SnakeGame:
         self.me = player
         self.inMenu = False
         self.reset_mate_timeout()
-        ui.track_button_presses(self.button_handler)  # start tracking button presses
+        if self.firstTime:
+            ui.track_button_presses(self.button_handler)  # start tracking button presses
+            self.firstTime = False
         dev.clear_screen(self.bg)
 
         
