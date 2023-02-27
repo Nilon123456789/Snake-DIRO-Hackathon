@@ -1,0 +1,20 @@
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+#f00#f00                                                    #f00#f00#f00#f00#f00
+#fd3#f30#f00                                                #f00#fd3#fd3#fd3#f00
+#fd4#f30#f00#f00                                            #f00#fd4#fd4#fd4#f00
+#fd4#f30#f00#f00#f00                    #f00#f00#f00#f00#f00#f00#fd4#fd4#fd4#f00
+#fd4#fd3#fd3#fd3#f00#f00                #f82#fd4#fd4#fd4#fd4#fd4#fd4#fd4#fd4#fd4
+#fd4#fd4#fd4#fd4#f00#f00#f00            #f82#fd4#fd4#fd4#fd4#fd4#fd4#fd4#fd4#fd4
+#fd4#fd4#fd4#fd4#f00#f00#f00            #f31#f61#f61#f61#f61#f61#fd4#fd4#fd4#fd4
+#fd4#fd4#fd4#fd4#f00#f00#f00            #f00#f00#f00#f00#f00#f00#fd4#fd4#fd4#fd4

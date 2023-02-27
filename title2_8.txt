@@ -1,0 +1,20 @@
+                    #fe0#fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0#fe0#fe0#fe0#df1#f44
+                        #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0#fe0#fe0#fe0#df1#f44
+                        #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#fe0                    #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#ef1                    #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#f44#fe0                #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#f44#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#f44#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#f44#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#f44#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#f44#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#f44#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#f44#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#ff0#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#fe0#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#fe0#fe0#fe0            #fe0#f34#f44#f44#f44#f44#cf1#fe0#fe0            #df1#f44
+#fe0                    #fe0#f34#f44#f35#ff0#ff0#ff0#fe0#fe0            #df1#f44
+#fe0                    #fe0#f34#f44#f25#fe0#fe0#fe0#fe0#fe0            #df1#f44
+                        #fe0#f34#f34#f25#fe0#fe0#fe0#fe0#fe0            #df1#f34
+                            #fe0#fe0#fe0#fe0#fe0                        #fe0#fe0

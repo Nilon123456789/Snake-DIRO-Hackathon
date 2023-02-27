@@ -9,17 +9,18 @@ from veloce_pomme import Veloce_Pomme
 from constant import Direction, IDs, Foods
 from sprites import Tail as tailSprite
 from sprites import Body as bodySprite
+from sprites import GameOver as game_over_sprite
 import bg
 from tail import Tail
 from wall import Wall
-import snakeImgs
+from scoreboard import Scoreboard
 import random
 
 class GameMatrix:
 
 
 
-    def __init__(self, get_tick, set_update_interval):
+    def __init__(self):
         self.players = {}
         self.chrono_apples = []
         self.veloce_apples = []
@@ -27,9 +28,10 @@ class GameMatrix:
         self.block = 10
         self.width = dev.screen_width // self.block # 135 pixels
         self.height = (dev.screen_height - 20) // self.block # 230 pixels
+        self.scoreboard = Scoreboard()
 
         
-    def reset_game(self, get_tick, set_update_interval):
+    def reset_game(self, get_tick, set_update_interval, autoCreateUser=True):
         self.isDead = False
 
         self.get_tick = get_tick
@@ -48,9 +50,10 @@ class GameMatrix:
         self.x_offset = (dev.screen_width-self.width*self.block)//2
         
 
-        self.players[net.id] = Player(self.width//2, self.height//2, net.id)
+        if (autoCreateUser):
+            self.players[net.id] = Player(self.width//2, self.height//2, net.id)
         # self.players["test"] = Player(self.width//2 + 5, self.height//2 + 5, "test")
-        self.game_matrix[self.height//2][self.width//2] = self.players[net.id]
+        # self.game_matrix[self.height//2][self.width//2] = self.players[net.id]
 
         # Create a random apple
         self.create_apple(Foods["POMME"])
@@ -61,10 +64,51 @@ class GameMatrix:
         self.draw_pointage()
                 
         
+    def ai_direction(self):
+        self.update();
+
+        if (self.players[net.id].x < self.findFruitX()):
+            return self.update_direction("right_down")
+
+        if (self.players[net.id].x > self.findFruitX()):
+            return self.update_direction("left_down")
+        
+        if (self.players[net.id].y < self.findFruitY()):
+            return self.update_direction("right_down")
+
+        if (self.players[net.id].y > self.findFruitY()):
+            return self.update_direction("left_down")
+
+
+        if (self.players[net.id].direction == Direction["UP"]):
+            if (self.players[net.id].y == 0):
+                return self.update_direction("right_down")
+        if (self.players[net.id].direction == Direction["DOWN"]):
+            if (self.players[net.id].y == 21):
+                return self.update_direction("right_down")
+        if (self.players[net.id].direction == Direction["LEFT"]):
+            if (self.players[net.id].x == 0):
+                return self.update_direction("right_down")
+        if (self.players[net.id].direction == Direction["RIGHT"]):
+            if (self.players[net.id].x >= 12):
+                return self.update_direction("right_down")
+        
+    def findFruitX(self):
+        for i in range(12):
+            for j in range(21):
+                if (self.game_matrix[i-1][j-1].id == 2):
+                    return j
+    
+    def findFruitY(self):
+        for i in range(12):
+            for j in range(21):
+                if (self.game_matrix[i-1][j-1].id == 2):
+                    return i
+        
 
     def draw_pointage(self):
         text_offset = 7 - (self.players[net.id].pointage >= 10) - (self.players[net.id].pointage >= 100)
-        dev.draw_text(dev.font_width*(text_offset), dev.screen_height - dev.font_height, self.players[net.id].pointage, "#fff", "#000")
+        dev.draw_text(dev.font_width*(text_offset), dev.screen_height - dev.font_height, str(self.players[net.id].pointage), "#fff", "#000")
         
     
     def draw_matrix(self):
@@ -75,7 +119,7 @@ class GameMatrix:
                 
     def draw(self, x, y, force=False):
         if (self.game_matrix[y][x].id == IDs["AIR"] or force):
-            dev.draw_image(self.x_offset+x*self.block, y*self.block, bg.bg())
+            dev.draw_image(self.x_offset+x*self.block, y*self.block, bg.bg_grass())
             if (not force):
                 return
             
@@ -152,7 +196,7 @@ class GameMatrix:
         
         if (posX < 0 or posX >= self.width or posY < 0 or posY >= self.height):
             self.game_over(player)
-            print("Game Over")
+            # print("Game Over")
             return
         
         obj = self.game_matrix[posY][posX]
@@ -220,40 +264,55 @@ class GameMatrix:
             self.move_draw(player, posX, posY)
             self.update_player_tail(player, lastX, lastY)
     
-    def body_img(self, posAfter, pos, posBefore):
+    def body_img(self, posAfter, pos, posBefore, playerDirection):
 
+        print("x : " + str(posAfter[0]) + str(pos[0]) + str(posBefore[0]) + " | y : " + str(posAfter[1]) + str(pos[1]) + str(posBefore[1]))
+        dir = self.get_dir(posBefore, pos, lenIs0=False, playerDirection=playerDirection, increment=0)
 
-        dir = self.get_dir(posBefore, pos)
-
-        if (posAfter[1] < pos[1] and dir == Direction["RIGHT"]):
-            return bodySprite.top_right_corner()
-        elif (posAfter[1] < pos[1] and dir == Direction["LEFT"]):
+        if (dir == Direction["LEFT"] and posAfter[1] < pos[1]):
             return bodySprite.top_left_corner()
-        elif (posAfter[1] > pos[1] and dir == Direction["RIGHT"]):
-            return bodySprite.bottom_right_corner()
-        elif (posAfter[1] > pos[1] and dir == Direction["LEFT"]):
+        elif (dir == Direction["LEFT"] and posAfter[1] > pos[1]):
             return bodySprite.bottom_left_corner()
-        elif (posAfter[0] < pos[0] and dir == Direction["UP"]):
-            return bodySprite.bottom_left_corner()
-        elif (posAfter[0] < pos[0] and dir == Direction["DOWN"]):
-            return bodySprite.top_left_corner()
-        elif (posAfter[0] > pos[0] and dir == Direction["UP"]):
-            return bodySprite.bottom_right_corner()
-        elif (posAfter[0] > pos[0] and dir == Direction["DOWN"]):
+        elif (dir == Direction["RIGHT"] and posAfter[1] < pos[1]):
             return bodySprite.top_right_corner()
+        elif (dir == Direction["RIGHT"] and posAfter[1] > pos[1]):
+            return bodySprite.bottom_right_corner()
+        elif (dir == Direction["UP"] and posAfter[0] < pos[0]):
+            return bodySprite.top_right_corner()
+        elif (dir == Direction["UP"] and posAfter[0] > pos[0]):
+            return  bodySprite.top_left_corner()
+        elif (dir == Direction["DOWN"] and posAfter[0] < pos[0]):
+            return bodySprite.bottom_right_corner()
+        elif (dir == Direction["DOWN"] and posAfter[0] > pos[0]):
+            return bodySprite.bottom_left_corner()
         elif (dir == Direction["UP"] or dir == Direction["DOWN"]):
             return bodySprite.vertical()
         elif (dir == Direction["LEFT"] or dir == Direction["RIGHT"]):
             return bodySprite.horizontal()
     
-    def get_dir(self, posBefore, pos):
-        if (posBefore[0] < pos[0]):
+    def get_dir(self, posBefore, pos, lenIs0, playerDirection=None, increment=2):
+
+        x = posBefore[0]
+        y = posBefore[1]
+
+        if not lenIs0:
+
+            if (playerDirection == Direction["UP"]):
+                y += increment
+            elif (playerDirection == Direction["DOWN"]):
+                y -= increment
+            elif (playerDirection == Direction["LEFT"]):
+                x += increment
+            elif (playerDirection == Direction["RIGHT"]):
+                x -= increment
+
+        if (x > pos[0]):
             return Direction["RIGHT"]
-        elif (posBefore[0] > pos[0]):
+        elif (x < pos[0]):
             return Direction["LEFT"]
-        elif (posBefore[1] > pos[1]):
+        elif (y > pos[1]):
             return Direction["DOWN"]
-        elif (posBefore[1] < pos[1]):
+        elif (y < pos[1]):
             return Direction["UP"]
     
     def update_player_tail(self, player, lastX, lastY, add_block=False):
@@ -275,10 +334,12 @@ class GameMatrix:
 
             
             if (not bodys[i].end):
-                bodys[i].img = self.body_img((lastX, lastY), (newPosX, newPosY), (bodys[i-1].x, bodys[i-1].y))
+                bodys[i].img = self.body_img((lastX, lastY), (newPosX, newPosY), (bodys[i-1].x, bodys[i-1].y), player.direction)
             else:
-                print("beforePos" + str((bodys[i-1].x, bodys[i-1].y)) + " pos " + str((newPosX, newPosY)))
-                bodys[i].img = tailSprite.get_tail(self.get_dir((bodys[i-1].x, bodys[i-1].y), (newPosX, newPosY)))
+                if (i == 0):
+                    bodys[i].img = tailSprite.get_tail(self.get_dir((bodys[i-1].x, bodys[i-1].y), (newPosX, newPosY), lenIs0=True))
+                else:
+                    bodys[i].img = tailSprite.get_tail(self.get_dir((bodys[i-1].x, bodys[i-1].y), (newPosX, newPosY), lenIs0=False, playerDirection=player.direction))
             
             self.move_draw(bodys[i], newPosX, newPosY)
 
@@ -323,6 +384,7 @@ class GameMatrix:
     def update(self):
 
         if self.isDead: return
+        
         current_time = self.get_tick()
 
         for apple in self.chrono_apples:
@@ -353,7 +415,45 @@ class GameMatrix:
         for key, player in self.players.items():
             self.update_player_head(player)
         
+    def online_update(self, dataList):
+        # print(data)
+        if self.isDead: return
+        current_time = self.get_tick()
+
+        for apple in self.chrono_apples:
+            if (current_time > apple.quit_time):
+                self.new_draw(Component(IDs["AIR"], apple.x, apple.y, 0), apple.x, apple.y)
+                self.chrono_apples.remove(apple)
         
+        for apple in self.veloce_apples:
+            if (current_time > apple.move_time):
+
+                oldX = apple.x
+                oldY = apple.y
+                
+                pos = self.random_pos()
+
+                while (self.game_matrix[pos[1]][pos[0]].id != IDs["AIR"]):
+                    pos = self.random_pos()
+                
+                self.move_draw(apple, pos[0], pos[1])
+                self.new_draw(Component(IDs["AIR"], oldX, oldY, 0), oldX, oldY)
+
+                apple.set_move_time(current_time)
+        
+        if (current_time > self.next_apple_spawn):
+            self.create_apple()
+            self.next_apple_spawn = current_time + random.randint(60, 350)
+
+        for key, player in self.players.items():
+            for data in dataList: # data : [id, dir, x, y]
+                if data[0] == player.userId:
+                    self.new_draw(Component(IDs["AIR"], player.x, player.y, 0), player.x, player.y)
+                    player.direction = data[1]
+                    player.x = data[2]
+                    player.y = data[3]
+            self.update_player_head(player)
+
     def get_matrix(self):
         return self.game_matrix
     
@@ -364,9 +464,17 @@ class GameMatrix:
         
     
     def game_over(self, player):
+
+        if self.isDead: return
+
         if player.userId != net.id:
             return
         self.isDead = True
+
+        # self.scoreboard.configure_player(player)
+        # self.scoreboard.new_highscore(player)
+        
+
         dev.clear_screen("#000")
         fg = '#000'
 
@@ -376,10 +484,16 @@ class GameMatrix:
         ui.center(x, dev.font_height*4, 'GAME', '#FFF', "#000")
         ui.center(x, dev.font_height*5, 'OVER', '#FFF', "#000")
     
-        dev.draw_image(x - 40, dev.font_height*7, snakeImgs.gameover_img1())
+        dev.draw_image(x - 40, dev.font_height*7, game_over_sprite.img1())
+
+    
 
         ui.center(x, dev.font_height*11, "SCORE", '#FFF', "#000")
         ui.center(x, dev.font_height*12, str(player.pointage), '#FFF', "#000")
+
+        # ui.center(x, dev.font_height*14, "Highscore", '#FFF', "#000")
+        # ui.center(x, dev.font_height*15, str(player.highscore), '#FFF', "#000")
+
 
         
         

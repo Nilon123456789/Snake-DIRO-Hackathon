@@ -19,6 +19,7 @@ class Tail(Component):
             self.__img = tailSprite.bottom_tail()
         elif (beforeY > self.__y):
             self.__img = tailSprite.top_tail()
+        print("tail end: ")
         self.__end = True
     
     @property
