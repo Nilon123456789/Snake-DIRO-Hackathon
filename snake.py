@@ -6,7 +6,7 @@ import ui
 import random
 
 from game_matrix import GameMatrix
-import maps
+from maps import Maps
 from player import Player
 
 class SnakeGame:
@@ -160,13 +160,13 @@ class SnakeGame:
         self.start_game(0)
 
     def map2(self):
-        self.start_game(0, maps.map2())
+        self.start_game(0, Maps.map2())
     
     def map1(self):
-        self.start_game(0, maps.map1())
+        self.start_game(0, Maps.map1())
     
     def map3(self):
-        self.start_game(0, maps.map3())
+        self.start_game(0, Maps.map3())
     
     def load_online(self): # called by api from host
         self.start_game(1)
@@ -241,7 +241,7 @@ class SnakeGame:
         dev.clear_screen(self.bg)
 
         
-        self.game_matrix.reset_game(self.get_tick, self.set_update_interval, maps_arrayaps)
+        self.game_matrix.reset_game(self.get_tick, self.set_update_interval, maps_array)
         
 
    

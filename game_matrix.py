@@ -82,7 +82,7 @@ class GameMatrix:
                 
     def draw(self, x, y, force=False):
         if (self.game_matrix[y][x].id == IDs["AIR"] or force):
-            dev.draw_image(self.x_offset+x*self.block, y*self.block, self.bg)
+            dev.draw_image(self.x_offset+x*self.block, y*self.block, self.bg())
             if (not force):
                 return
             
