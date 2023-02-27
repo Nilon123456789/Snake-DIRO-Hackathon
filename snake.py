@@ -5,9 +5,8 @@ import apps
 import ui
 import random
 
-# from bigSprites import BigSprites
-from sprites import Menu as menu_sprite
 from game_matrix import GameMatrix
+import maps
 from player import Player
 
 class SnakeGame:
@@ -16,13 +15,15 @@ class SnakeGame:
         self.bg = '#000'  # general background color
 
         # game Mode
-        self.game_matrix = GameMatrix()
-        
+        self.game_matrix = GameMatrix(self.get_tick, self.set_update_interval)
 
         self.game_mode = None
 
         self.game_modes = {}  # game state
-        self.game_modes['ai_SOLO'] = [self.load_ai, 0]
+        self.game_modes['map3'] = [self.map3, 0]
+        self.game_modes['map2'] = [self.map2, 0]
+        self.game_modes['map1'] = [self.map1, 0]
+        self.game_modes['ai_easy'] = [self.load_ai_1, 0]
         self.game_modes['normal'] = [self.load_normal, 0]
         self.game_modes['Start'] = [self.load_online_menu, 1]
 
@@ -112,9 +113,7 @@ class SnakeGame:
                             objList.append(obj)
                         obj = [net.id, self.game_matrix.players[net.id].direction, self.game_matrix.players[net.id].x, self.game_matrix.players[net.id].y]
                         objList.append(obj)
-                        for player in self.listOfPlayers:
-                            net.send(player, ["update", objList])
-                
+                        net.send(player, ["update", objList])
                 # self.game_matrix.update()
             if self.networked:
                 self.pong_timer -= 1
@@ -131,8 +130,6 @@ class SnakeGame:
                 self.game_over(event)
             else:
                 self.game_matrix.update_direction(event)
-                if self.networked: # client to server
-                    net.send(mate.id, ["direction", event])
 
                 # if self.isHosting:
                 #     for player in self.listOfPlayers:
@@ -149,7 +146,6 @@ class SnakeGame:
             # self.game_matrix.reset_game(self.get_tick, self.set_update_interval)
             self.isReady = False
             if (event == 'left_down'):
-                
                 self.menu()
 
     def start_game_soon(self, player): # 4
@@ -160,29 +156,25 @@ class SnakeGame:
     def load_normal(self):
         self.start_game(0)
 
-    def load_ai(self):
-        self.inMenu = False
-        self.game_matrix.reset_game(self.get_tick, self.set_update_interval)
-        self.ai_loop()
-        
-    def ai_loop(self):
-        self.game_matrix.update_direction(self.game_matrix.ai_direction())
-        dev.after(ui.time_delta, self.ai_loop)
+    def load_ai_1(self):
+        self.start_game(0)
+
+    def map2(self):
+        self.start_game(0, maps.map2())
+    
+    def map1(self):
+        self.start_game(0, maps.map1())
+    
+    def map3(self):
+        self.start_game(0, maps.map3())
     
     def load_online(self): # called by api from host
         self.start_game(1)
 
     def load_online_menu(self): # called by host to start the game
-        self.game_matrix.players[net.id] = Player(2, 20, net.id)
-        listToSend = []
-        for key, playerId in enumerate(self.listOfPlayers):
-            listToSend.append([playerId, 4+key*2, 15])
-        listToSend.append([net.id, 2, 15])
-        for key, player in enumerate(self.listOfPlayers):
-
-            net.send(player, ["custom", ["start", listToSend]])
-
-            self.game_matrix.players[player] = Player(4+key*2, 20, player)
+        for player in self.listOfPlayers:
+            net.send(player, ["custom", "start"])
+            self.game_matrix.players[player] = Player(6, 7, player)
         self.load_online()
     
     def menu(self):  # pick an app with a menu and call its handler # 5
@@ -210,24 +202,19 @@ class SnakeGame:
                 dev.after(ui.time_delta, cont)
                 if self.menuImageCnt == 0:
                     self.menuImageCnt = 1
-                    dev.draw_image(10, 10, menu_sprite.title1())
-                    dev.draw_image(20, 60, menu_sprite.spritemenu2())
+
 
                 elif self.menuImageCnt == 1:
                     self.menuImageCnt = 2
-                    dev.draw_image(10, 10, menu_sprite.title2())
-                    dev.draw_image(20, 60, menu_sprite.spritemenu3())
 
 
                 elif self.menuImageCnt == 2:
                     self.menuImageCnt = 3
-                    dev.draw_image(10, 10, menu_sprite.title1())
-                    dev.draw_image(20, 60, menu_sprite.spritemenu2())
+
 
                 elif self.menuImageCnt == 3:
                     self.menuImageCnt = 0
-                    dev.draw_image(10, 10, menu_sprite.title2())
-                    dev.draw_image(20, 60, menu_sprite.spritemenu3())
+
 
                 
             else:  # an item was selected by the menu
@@ -235,15 +222,16 @@ class SnakeGame:
                 self.game_modes[item][0]()
 
                 
+                
 
-
+        ui.center(dev.screen_width//2, dev.font_height*3, 'SNAKE', '#FFF', '#632')
         # dev.draw_image(20, 60, readFile("snake1.png"))        
         ui.menu(4, 150, 8, 8, 2, [fg, "#632"], items, "normal", menu_handler)
         self.inMenu = True
 
 
 
-    def start_game(self, player):
+    def start_game(self, player, maps_array=None):
         self.me = player
         self.inMenu = False
         self.reset_mate_timeout()
@@ -252,10 +240,8 @@ class SnakeGame:
             self.firstTime = False
         dev.clear_screen(self.bg)
 
-        if (self.networked):
-            self.game_matrix.reset_game(self.get_tick, self.set_update_interval, False)
-        else:
-            self.game_matrix.reset_game(self.get_tick, self.set_update_interval)
+        
+        self.game_matrix.reset_game(self.get_tick, self.set_update_interval, maps_arrayaps)
         
 
    
@@ -302,19 +288,12 @@ class SnakeGame:
             if msg[1] == 'ready':
                 if not self.isHosting and self.master() and not self.isSlave: # only work in 1v1 mode
                     self.start_game_soon(peer)
-            if msg[1][0] == 'start':
-                print(msg[1][1]) # [['CB985', 4, 15], ['CB045', 2, 15]]
-                for player in msg[1][1]:
-                    self.game_matrix.players[player[0]] = Player(player[1], player[2], player[0])
-                
-                # self.game_matrix.players[net.id] = Player(msg[1][1], msg[1][2], net.id)
+            if msg[1] == 'start':
                 self.load_online()
+                self.game_matrix.players[peer] = Player(6, 7, peer)
 
-        elif type(msg) is list and msg[0] == 'update': # server to client
-            self.game_matrix.online_update(msg[1])
-        
-        elif msg[0] == 'direction': # client to server
-            self.game_matrix.update_direction_other(peer, msg[1])
+        elif type(msg) is list and msg[0] == 'update':
+            self.game_matrix.update()
 
 
         if self.isHosting and not self.isReady: # BYPASS ADD MULTIPLE PLAYERS

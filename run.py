@@ -11,7 +11,7 @@ snakeGame = SnakeGame()
 
 
 def start():
-    if (True): # Bypass Menu
+    if (False): # Bypass Menu
         snakeGame.menu()
 
     else:

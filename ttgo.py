@@ -23,14 +23,6 @@ def fill_rect(x, y, w, h, color):
 def draw_image(x, y, image):
     pixels.drawImage(x, y, image)
 
-def draw_chuck(x, y, files_list):
-    for files_line in files_list:
-        for line in files_line:
-            draw_image(x, y, open(line, 'r').read())
-            x += 20
-        x = 0
-        y += 20
-
 def draw_text(x, y, text, fg, bg):
     pixels.drawText(x, y, text, fg, bg)
 

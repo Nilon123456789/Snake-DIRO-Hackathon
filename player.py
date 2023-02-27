@@ -11,6 +11,7 @@ class Player(Component):
         self.__body = []
         self.__direction = Direction["UP"]
         self.__pointage = 0
+        self.__id = ""
         self.__highscore = 0
         self.userId = userId
     
@@ -55,7 +56,7 @@ class Player(Component):
         return self.__id
     
     @id.setter
-    def id(self, id):
+    def id(self, username):
         self.__id == id
 
     @property
