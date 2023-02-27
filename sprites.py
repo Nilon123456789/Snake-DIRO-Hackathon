@@ -293,7 +293,7 @@ class Wall:
         elif (id == 1):
             return Wall.arbre()
         elif (id == 2):
-            return Wall.arbre2()
+            return Wall.rock()
             
         
     def arbre():

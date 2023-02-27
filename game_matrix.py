@@ -43,8 +43,11 @@ class GameMatrix:
             for j in range(self.width):
                 if (map != None):
                     self.bg = bg.bg_grass
-                    if (map[i][j] == 1):
-                        self.game_matrix[i].append(Wall(j, i))
+                    if (map[i][j] >= 1):
+                        wall_id = map[i][j]
+                        if (wall_id == 3) : 
+                            wall_id = 0
+                        self.game_matrix[i].append(Wall(j, i, wall_id))
                     else:
                         self.game_matrix[i].append(Component(0, 0, 0, 0))
                 else:
