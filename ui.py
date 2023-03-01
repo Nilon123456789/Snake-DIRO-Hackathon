@@ -1,8 +1,8 @@
 import ttgo as dev
 import net
 
-time_delta = 0.001  # time increment for polling buttons, etc
-long_press = 0.01   # after 0.5 seconds button press is "long"
+time_delta = 0.05  # time increment for polling buttons, etc
+long_press = 0.5  # after 0.5 seconds button press is "long"
 
 def pad(text, width):  # pad text with spaces at end
     return text + ' ' * (width - len(text))
